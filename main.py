@@ -4,8 +4,12 @@ import subprocess
 
 app = FastAPI()
 
+# 1. ADD THIS NEW ROUTE FOR THE BROWSER
+@app.get("/")
+def read_root():
+    return {"message": "Maia-3 API is running successfully! Send POST requests to /get_move"}
+
 # Pre-download the 5M parameter Maia model on startup
-# Note: This might take a minute on the very first run
 subprocess.run(["maia3-cache", "--model", "maia3-5m"], capture_output=True)
 
 class ChessRequest(BaseModel):

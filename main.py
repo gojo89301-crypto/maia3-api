@@ -1,10 +1,19 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import subprocess
 
 app = FastAPI()
 
-# 1. ADD THIS NEW ROUTE FOR THE BROWSER
+# 🚨 CRITICAL FIX: Allow Chess.com to talk to this server
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 @app.get("/")
 def read_root():
     return {"message": "Maia-3 API is running successfully! Send POST requests to /get_move"}
@@ -14,12 +23,11 @@ subprocess.run(["maia3-cache", "--model", "maia3-5m"], capture_output=True)
 
 class ChessRequest(BaseModel):
     fen: str
-    movetime: int = 500  # Default 500ms think time
+    movetime: int = 500
 
 @app.post("/get_move")
 async def get_move(request: ChessRequest):
     try:
-        # Start the real Maia-3 UCI engine process
         process = subprocess.Popen(
             ["maia3-5m"],
             stdin=subprocess.PIPE,
@@ -28,13 +36,11 @@ async def get_move(request: ChessRequest):
             text=True
         )
         
-        # Send standard UCI commands to the engine
         process.stdin.write("uci\n")
         process.stdin.write(f"position fen {request.fen}\n")
         process.stdin.write(f"go movetime {request.movetime}\n")
         process.stdin.flush()
         
-        # Read the output to find the "bestmove"
         best_move = None
         for line in process.stdout:
             if line.startswith("bestmove"):

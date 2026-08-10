@@ -4,7 +4,8 @@ import subprocess
 
 app = FastAPI()
 
-# Pre-download the 5M parameter Maia model on startup so the first request isn't slow
+# Pre-download the 5M parameter Maia model on startup
+# Note: This might take a minute on the very first run
 subprocess.run(["maia3-cache", "--model", "maia3-5m"], capture_output=True)
 
 class ChessRequest(BaseModel):
